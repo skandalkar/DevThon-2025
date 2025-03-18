@@ -8,9 +8,8 @@ const principalSchema = new mongoose.Schema({
     name: { type: String },
     email: { type: String, required: true, unique: true },
     contact: { type: Number, required: true, unique: true },
-    password: { type: String, required: true },
+    password: { type: String, required: true }
 });
-
 
 //schema for Head of Department
 const hodSchema = new mongoose.Schema({
@@ -18,7 +17,7 @@ const hodSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     contact: { type: Number, required: true, unique: true },
     department: { type: String, required: true },
-    password: { type: String, required: true },
+    password: { type: String, required: true }
 });
 
 //schema for Faculty
@@ -28,7 +27,7 @@ const facultySchema = new mongoose.Schema({
     contact: { type: Number, required: true, unique: true },
     department: { type: String, required: true },
     designation: { type: String, required: true },
-    password: { type: String, required: true },
+    password: { type: String, required: true }
 });
 
 //schema for Student
