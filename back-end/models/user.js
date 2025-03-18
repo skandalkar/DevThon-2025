@@ -1,6 +1,8 @@
 
 //this file contains the schema for the user based on their role
-
+/*
+    This file (`user.js`) defines Mongoose schemas for different user roles (Principal, HoD, Faculty, and Student) in a system. It specifies their required fields and creates models for database storage and retrieval.
+*/
 const mongoose = require("mongoose");
 
 //schema for Pricipal
