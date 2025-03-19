@@ -18,14 +18,9 @@ const mongoose = require('mongoose');
 const app = express();
 
 
-app.get('/', (req,  res)=> {
-    res.send("This is home route API endpoint.")
-});
 
-app.get('/about', (req,  res)=> {
-    res.send("This is about route API endpoint.")
-});
 
+//Server running 
 app.listen(process.env.portNo, ()=> {
     console.log(`Server is running on port ${process.env.portNo}`);
 });
