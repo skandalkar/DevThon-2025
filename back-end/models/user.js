@@ -8,12 +8,13 @@ const mongoose = require("mongoose");
 
 const options = { discriminatorKey: "role", timestamps: true };
 
-//  Base Schema (Common fields for all roles)
+// Base Schema (Common fields for all users)
 const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    contact: { type: String, required: true },
     password: { type: String, required: true },
+    contact: { type: String, required: true },
+    role: { type: String, default: "Principal" },
 }, options);
 
 const User = mongoose.model("User", userSchema);
@@ -21,19 +22,19 @@ const User = mongoose.model("User", userSchema);
 // Principal Schema (No extra fields)
 const Principal = User.discriminator("Principal", new mongoose.Schema({}, options));
 
-// HoD Schema (Extra: department, designation)
+// HoD Schema (Extra fields: department, designation)
 const HoD = User.discriminator("HoD", new mongoose.Schema({
     department: { type: String, required: true },
     designation: { type: String, required: true }
 }, options));
 
-// Faculty Schema (Extra: department, designation)
+// Faculty Schema (Extra fields: department, designation)
 const Faculty = User.discriminator("Faculty", new mongoose.Schema({
     department: { type: String, required: true },
     designation: { type: String, required: true }
 }, options));
 
-// Student Schema (Extra: rollNumber, year, department)
+// Student Schema (Extra fields: rollNumber, year, department)
 const Student = User.discriminator("Student", new mongoose.Schema({
     rollNumber: { type: String, required: true, unique: true },
     year: { type: String, required: true },
