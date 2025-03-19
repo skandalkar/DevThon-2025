@@ -1,103 +1,185 @@
-
-//
-
-/* 
-
-*/
-
 /*
 const express = require("express");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-
 const { Principal, HoD, Faculty, Student } = require("../models/user");
+const generateToken = require("../utils/generateToken");
 
 const router = express.Router();
-// const JWT_SECRET = "your_secret_key"; // Store securely in .env
 
-const generateToken = (user, role) => {
-    return jwt.sign({ id: user._id, role: role }, JWT_SECRET, { expiresIn: "1h" });
-};
+// Common authentication function for all roles (SignUp & SignIn)
 
-// Principal Signup/Login
-router.post("/signin/principal", async (req, res) => {
+const handleAuth = async (req, res, RoleModel, roleName) => {
     try {
-        const { email, password, name } = req.body;
-        let user = await Principal.findOne({ email });
-        if (!user) {
-            const hashedPassword = await bcrypt.hash(password, 10);
-            user = new Principal({ name, email, password: hashedPassword });
-            await user.save();
+        const { name, email, password, department, year, contact, designation, rollNumber} = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ message: "Email and password are required" });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+        let user = await RoleModel.findOne({ email });
 
-        const token = generateToken(user, "Principal");
-        res.json({ message: "Login successful", token });
-    } catch (error) {
-        res.status(500).json({ message: "Server error", error });
+        if (user) {
+            return res.status(400).json({ message: "Account already exists with this email." });
+        }
+
+        // Check if required fields for role exist before proceeding
+        const newUser = { 
+            name, 
+            email, 
+            password: await bcrypt.hash(password, 10), 
+            contact,
+            role: roleName 
+        };
+
+        if (roleName === "HoD" || roleName === "Faculty" || roleName === "Student") {
+            if (!department) return res.status(400).json({ message: "Department is required" });
+            newUser.department = department;
+        }
+
+        if (roleName === "HoD" || roleName === "Faculty") {
+            if (!contact) return res.status(400).json({ message: "Contact is required" });
+            if (!designation) return res.status(400).json({ message: "Designation is required" });
+            newUser.contact = contact;
+            newUser.designation = designation;
+        }
+
+        if (roleName === "Student") {
+            if (!year) return res.status(400).json({ message: "Year is required" });
+            if (!contact) return res.status(400).json({ message: "Contact is required" });
+            if (!rollNumber) return res.status(400).json({ message: "Roll Number is required" });
+        
+            newUser.year = year;
+            newUser.contact = contact;
+            newUser.rollNumber = rollNumber;
+        }
+
+        user = new RoleModel(newUser);
+        await user.save();
+
+        // Generate JWT token
+        const token = generateToken(user, roleName);
+
+        res.status(201).json({ message: "Account created successfully", token, user });
+    } 
+    catch (error) {
+        console.error("Authentication error:", error);
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
-});
+};
 
-// Example: Protected Route for Principals Only (Uses Middleware)
-router.get("/dashboard/principal", authMiddleware(["Principal"]), (req, res) => {
-    res.json({ message: "Welcome to Principal Dashboard", user: req.user });
-});
 
-// Example: Protected Route for HoDs Only
-router.get("/dashboard/hod", authMiddleware(["HoD"]), (req, res) => {
-    res.json({ message: "Welcome to HoD Dashboard", user: req.user });
-});
+// Routes for each role
+router.post("/principal", (req, res) => handleAuth(req, res, Principal, "Principal"));
+router.post("/hod", (req, res) => handleAuth(req, res, HoD, "HoD"));
+router.post("/faculty", (req, res) => handleAuth(req, res, Faculty, "Faculty"));
+router.post("/student", (req, res) => handleAuth(req, res, Student, "Student"));
 
 module.exports = router;
-
 */
+
 
 const express = require("express");
 const bcrypt = require("bcrypt");
 const { Principal, HoD, Faculty, Student } = require("../models/user");
-const generateToken = require("../utils/generateToken"); // Import token utility
+const generateToken = require("../utils/generateToken");
 
 const router = express.Router();
 
-//  Common function for handling login for different roles
-const handleAuth = async (req, res, RoleModel, roleName) => {
+// Common SignUp function for all roles
+const handleSignUp = async (req, res, RoleModel, roleName) => {
     try {
-        const { email, password, name, department, year } = req.body;
-        let user = await RoleModel.findOne({ email });
+        const { name, email, password, department, year, contact, designation, rollNumber } = req.body;
 
-        if (!user) {
-            // Hash password
-            const hashedPassword = await bcrypt.hash(password, 10);
-            const newUser = { name, email, password: hashedPassword, role: roleName };
-
-            // Extra fields for specific roles
-            if (department) newUser.department = department;
-            if (year) newUser.year = year;
-
-            user = new RoleModel(newUser);
-            await user.save();
+        if (!email || !password) {
+            return res.status(400).json({ message: "Email and password are required" });
         }
 
-        // Password verification
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+        let existingUser = await RoleModel.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: "Account already exists with this email." });
+        }
 
-        // 🔹 Generate token using the utility function
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // New user object
+        const newUser = { name, email, password: hashedPassword, role: roleName };
+
+        if (roleName === "HoD" || roleName === "Faculty" || roleName === "Student") {
+            if (!department) return res.status(400).json({ message: "Department is required" });
+            newUser.department = department;
+        }
+
+        if (roleName === "HoD" || roleName === "Faculty") {
+            if (!contact) return res.status(400).json({ message: "Contact is required" });
+            if (!designation) return res.status(400).json({ message: "Designation is required" });
+            newUser.contact = contact;
+            newUser.designation = designation;
+        }
+
+        if (roleName === "Student") {
+            if (!year) return res.status(400).json({ message: "Year is required" });
+            if (!contact) return res.status(400).json({ message: "Contact is required" });
+            if (!rollNumber) return res.status(400).json({ message: "Roll Number is required" });
+            newUser.year = year;
+            newUser.contact = contact;
+            newUser.rollNumber = rollNumber;
+        }
+
+        const user = new RoleModel(newUser);
+        await user.save();
+
+        // Generate JWT token
         const token = generateToken(user, roleName);
 
-        res.json({ message: "Login successful", token });
+        res.status(201).json({ message: "Account created successfully", token, user });
     } catch (error) {
-        res.status(500).json({ message: "Server error", error });
+        console.error("SignUp Error:", error);
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };
 
-// Routes for each role
-router.post("/signin/principal", (req, res) => handleAuth(req, res, Principal, "Principal"));
-router.post("/signin/hod", (req, res) => handleAuth(req, res, HoD, "HoD"));
-router.post("/signin/faculty", (req, res) => handleAuth(req, res, Faculty, "Faculty"));
-router.post("/signin/student", (req, res) => handleAuth(req, res, Student, "Student"));
+// Common SignIn function for all roles
+const handleSignIn = async (req, res, RoleModel, roleName) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ message: "Email and password are required" });
+        }
+
+        const user = await RoleModel.findOne({ email });
+
+        if (!user) {
+            return res.status(401).json({ message: "Invalid email or password" });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+            return res.status(401).json({ message: "Invalid email or password" });
+        }
+
+        // Generate JWT token
+        const token = generateToken(user, roleName);
+
+        res.status(200).json({ message: "Login successful", token, user });
+    } catch (error) {
+        console.error("SignIn Error:", error);
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+};
+
+// Routes for SignUp
+router.post("/signup/principal", (req, res) => handleSignUp(req, res, Principal, "Principal"));
+router.post("/signup/hod", (req, res) => handleSignUp(req, res, HoD, "HoD"));
+router.post("/signup/faculty", (req, res) => handleSignUp(req, res, Faculty, "Faculty"));
+router.post("/signup/student", (req, res) => handleSignUp(req, res, Student, "Student"));
+
+// Routes for SignIn
+router.post("/signin/principal", (req, res) => handleSignIn(req, res, Principal, "Principal"));
+router.post("/signin/hod", (req, res) => handleSignIn(req, res, HoD, "HoD"));
+router.post("/signin/faculty", (req, res) => handleSignIn(req, res, Faculty, "Faculty"));
+router.post("/signin/student", (req, res) => handleSignIn(req, res, Student, "Student"));
 
 module.exports = router;
-// Note: The `authMiddleware` function is not defined in this code snippet. It is assumed to be defined elsewhere in the codebase.
