@@ -5,7 +5,7 @@
  This file defines the Department Schema and creates a model (Department) for storing and managing department-related data in database.
 */
 
-
+/*
 const mongoose = require("mongoose");
 
 const departmentSchema = new mongoose.Schema({
@@ -17,3 +17,29 @@ const departmentSchema = new mongoose.Schema({
 
 const Department = mongoose.model("Department", departmentSchema);
 module.exports = Department;
+*/
+
+
+const mongoose = require("mongoose");
+
+const departmentSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    totalStudents: { type: Number, required: true },
+    passedOutStudents: { type: Number, required: true },
+    placements: [
+        {
+            year: Number,
+            placedStudents: Number,
+            companyData: [
+                {
+                    companyName: String,
+                    numberOfStudents: Number
+                }
+            ]
+        }
+    ]
+});
+
+const Department = mongoose.model("Department", departmentSchema);
+module.exports = Department;
+
