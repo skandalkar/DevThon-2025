@@ -1,3 +1,7 @@
+/* 
+    This file will specify the connection with database.
+    It will use mongoose to connect with MongoDB.
+*/
 
 const mongoose = require('mongoose');
 
