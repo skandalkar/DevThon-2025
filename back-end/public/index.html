@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Placement Statistics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  <!-- Chart.js CDN -->
+</head>
+<body>
+
+    <h2>Placement Data Visualization</h2>
+    <canvas id="placementChart"></canvas>
+
+    <script>
+        // Fetch placement data from the backend API
+        fetch("/api/placements")
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById("placementChart").getContext("2d");
+
+                new Chart(ctx, {
+                    type: "bar",
+                    data: {
+                        labels: data.map(item => item.year),
+                        datasets: [{
+                            label: "Placed Students",
+                            data: data.map(item => item.placedStudents),
+                            backgroundColor: "rgba(75, 192, 192, 0.6)",
+                            borderColor: "rgba(75, 192, 192, 1)",
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error("Error fetching placement data:", error));
+    </script>
+
+</body>
+</html>
