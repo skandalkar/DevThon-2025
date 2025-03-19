@@ -1,27 +1,27 @@
 
-//server aknowlegement
-let date = new Date();
-console.log(date.toLocaleTimeString());
-console.log("\n");
 
-
-//importing express
 const express = require('express');
 
-//accessing the .env file
-require('dotenv').config();
+const cors = require('cors');
 
-//importing mongoose
-const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
 
-//importing the 
+const connectDB = require('./config/dbConnection');
+
+const authRoute = require("./routes/authRoutes");
+
+
 const app = express();
+require('dotenv').config();
+connectDB();
+
+app.use(cors());
+app.use(bodyParser.json());
+
+//authentication route
+app.use("/auth", authRoute);  //for sigup and signin
 
 
-
-
-//Server running 
-app.listen(process.env.portNo, ()=> {
-    console.log(`Server is running on port ${process.env.portNo}`);
+app.listen(process.env.PORT || 5000, () => {
+  console.log(`Server is running on port ${process.env.PORT}`);
 });
-
